@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "simple-xlsx-writer"
+version = "0.1.0"
+dependencies = [
+]
+requires-python = ">=3.11"
+authors = [
+  {name = "Krzysztof Ruta", email = "krzys9876@gmail.com"}
+]
+maintainers = [
+  {name = "Krzysztof Ruta", email = "krzys9876@gmail.com"}
+]
+description = "Save large amounts of data to small xlsx files"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["pyspark", "spark", "explorer", "data"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+[project.urls]
+Homepage = "https://github.com/krzys9876/simple_xlsx_writer"
+Repository = "https://github.com/krzys9876/simple_xlsx_writer"
+
+[project.optional-dependencies]
+oracle = ["oracledb"]
