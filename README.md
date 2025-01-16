@@ -37,7 +37,7 @@ This should be clear when reading the helper function:
 
 Note that the only supported data types are: *str*, *int* and *float*, which relates to the way data is saved in xlsx file.
 
-So you may have to prepare the input array yourself or use other submdules (see below).
+So you may have to prepare the input array yourself or use other submodules (see below).
 
 There's a helper function *write_dummy* that saves predefined tiny file under given name.
 
