@@ -1,0 +1,6 @@
+.venv/
+tests/simple_xlsx_writer_test_files*
+.idea
+*.xlsx
+*_ignore.py
+*.zip
