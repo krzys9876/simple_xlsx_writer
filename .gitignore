@@ -6,3 +6,4 @@ tests/__pycache__
 *.xlsx
 *_ignore.py
 *.zip
+dist/
