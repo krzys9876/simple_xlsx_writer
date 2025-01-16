@@ -57,6 +57,8 @@ To save query results simply run:
 
 See: *main.py*
 
+    ...    
+
     username = input("username: ")
     password = getpass.getpass()
     dh_url = input("DSN: ")
@@ -68,3 +70,30 @@ See: *main.py*
     query = "select * from all_tables"
     base_path = os.path.dirname(__file__)
     oracle_handler.write_oracle_query(query,base_path, "all_tables",username,password,dh_url)
+
+    ...
+
+## Installation
+
+Install package using pip:
+
+    pip install simple-xlsx-writer
+
+If you wish to use *Oracle* connectivity, add option:
+
+    pip install simple-xlsx-writer[oracle]
+
+To verify installation run:
+
+    import os
+    from simple_xlsx_writer import writer
+
+    base_path = os.path.dirname(__file__) # or provide explicit path in interactive mode
+    writer.write_dummy(base_path, "dummy01")
+
+You should find *dummy01.xlsx* file in a given containig:
+
+| A    | B    | C                   |
+|------|------|---------------------|
+| TEST | 1,23 | 2024-10-01 12:34:56 |
+| TEST | 200  | 2024-10-01 12:34:56 |
