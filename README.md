@@ -11,6 +11,12 @@ The problem is when I must load large number of records, up to Excel limit (2^20
 Secondly, I just want to understand *xlsx* internals and use the simples possible code to handle files. 
 As a side effect, it is simpler and faster than using some other libraries.
 
+As a simple benchmark consider a sample file of 700+k records and 18 columns. 
+Standard *pandas* creates files of about **40**MB. The simple_xls_writer's file is as small as **8**MB which makes it more *email friendly*. 
+
+
+(Of course when saving modified file it gets much bigger but this not the point). 
+
 ## Usage
 
 The project consists of submodules: 
