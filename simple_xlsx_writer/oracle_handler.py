@@ -6,6 +6,8 @@ import datetime
 from simple_xlsx_writer import writer
 
 
+# See:
+# https://cjones-oracle.medium.com/using-python-oracledb-1-0-with-sqlalchemy-pandas-django-and-flask-5d84e910cb19
 def __init_oracle_version__():
     oracledb.version = "8.3.0"
     sys.modules["cx_Oracle"] = oracledb
