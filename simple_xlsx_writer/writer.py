@@ -10,6 +10,10 @@ def __save_template__(path: str, template: str) -> None:
     with open(path, "w", encoding="utf-8") as f:
         f.write(template)
 
+DEFAULT_PARAMS = {
+    "sheet_name": "data"
+}
+
 __CONTENT_TYPES_XML__ = \
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -65,7 +69,11 @@ def __prepare_shared_strings__(count: int, unique: int, strings: str) -> str:
             .replace("{{ UNIQUE_COUNT }}", str(unique))
             .replace("{{ STRINGS }}", str(strings)))
 
-def prepare_blank_xlsx(base_path: str, target_name: str, sheet_name: str = "data") -> None:
+def prepare_blank_xlsx(base_path: str, target_name: str, custom_params = None) -> None:
+    params = DEFAULT_PARAMS.copy()
+    if custom_params is not None:
+        params.update(custom_params)
+
     __ensure_path__(base_path)
     target_path = os.path.join(base_path, target_name)
     __ensure_path__(target_path)
@@ -81,7 +89,7 @@ def prepare_blank_xlsx(base_path: str, target_name: str, sheet_name: str = "data
     __save_template__(os.path.join(target_path, "[Content_Types].xml"), __CONTENT_TYPES_XML__)
     __save_template__(os.path.join(rels_path, ".rels"), __RELS__)
     __save_template__(os.path.join(xl_path, "workbook.xml"),
-                      __XL_WORKBOOK_XML__.replace("{{ SHEET_NAME }}", sheet_name))
+                      __XL_WORKBOOK_XML__.replace("{{ SHEET_NAME }}", params["sheet_name"]))
     __save_template__(os.path.join(xl_rels_path, "workbook.xml.rels"), __XL_RELS_WORKBOOK_XML__)
 
 
