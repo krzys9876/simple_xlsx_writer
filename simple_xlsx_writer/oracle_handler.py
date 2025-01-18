@@ -22,10 +22,18 @@ def get_sysdate(user: str, password: str, dsn: str) -> datetime.datetime:
             return res[0]
 
 
-def get_data_from_query(query: str, user: str, password: str, dsn: str, headers: bool = True) -> []:
+def get_data_from_query(query: str, user: str, password: str, dsn: str, headers: bool = True, custom_params = None) -> []:
     __init_oracle_version__()
 
+    params = writer.DEFAULT_PARAMS.copy()
+    if custom_params is not None:
+        params.update(custom_params)
+
     data = []
+    date_format = params["python_date_format"]
+    datetime_format = params["python_datetime_format"]
+    datetime_remove_zeros = params["python_datetime_remove_zeros"]
+    datetime_remove_zeros_pattern = params["python_datetime_remove_zeros_pattern"]
     with oracledb.connect(user=user, password=password, dsn=dsn) as connection:
         with connection.cursor() as cursor:
             result = cursor.execute(query)
@@ -42,9 +50,12 @@ def get_data_from_query(query: str, user: str, password: str, dsn: str, headers:
                     if type(cell)==int or type(cell)==float or type(cell)==str:
                         row.append(cell)
                     elif type(cell)==datetime.datetime:
-                        row.append(cell.strftime("%Y-%m-%d %H:%M:%S").replace(" 00:00:00", ""))
+                        txt = cell.strftime(datetime_format)
+                        if datetime_remove_zeros:
+                            txt = txt.replace(datetime_remove_zeros_pattern, "")
+                            row.append(txt)
                     elif type(cell) == datetime.date:
-                        row.append(cell.strftime("%Y-%m-%d"))
+                        row.append(cell.strftime(date_format))
                     elif type(cell)==NoneType:
                         row.append("")
                     else:
@@ -54,13 +65,13 @@ def get_data_from_query(query: str, user: str, password: str, dsn: str, headers:
 
 
 def write_oracle_query(query: str, base_path: str, target_file_name: str, user: str, password: str, dsn: str,
-                       header: bool = True, debug: bool = False) -> None:
+                       header: bool = True, debug: bool = False, custom_params = None) -> None:
     if debug:
         print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ": executing query")
     data = get_data_from_query(query,user,password,dsn,header)
     if debug:
         print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ": writing file")
-    writer.write_raw_data(base_path, target_file_name, data, debug)
+    writer.write_raw_data(base_path, target_file_name, data, debug, custom_params)
     if debug:
         print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ": finished")
 

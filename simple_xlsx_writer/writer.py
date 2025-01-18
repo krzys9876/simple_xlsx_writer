@@ -11,7 +11,14 @@ def __save_template__(path: str, template: str) -> None:
         f.write(template)
 
 DEFAULT_PARAMS = {
-    "sheet_name": "data"
+    "sheet_name": "data",
+    "python_date_format": "%Y-%m-%d",
+    "python_datetime_format": "%Y-%m-%d %H:%M:%S",
+    "python_datetime_remove_zeros": True,
+    "python_datetime_remove_zeros_pattern": " 00:00:00",
+    "row_limit": 1048576, # 2^20
+    "row_limit_exceed_strategy": "files" # files / sheets
+
 }
 
 __CONTENT_TYPES_XML__ = \
@@ -135,11 +142,8 @@ def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: i
     __save_template__(os.path.join(base_path, target_name, 'xl', "sharedStrings.xml"), shared_strings_xml)
 
 
-def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
-    # remove redundant file extension
-    target_name = target_file_name if not target_file_name.endswith(".xlsx") else target_file_name[:-3]
-
-    prepare_blank_xlsx(base_path, target_name, custom_params)
+def __do_write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
+    prepare_blank_xlsx(base_path, target_file_name, custom_params)
 
     # assuming that most of the strings is actually unique, let's find all repeated strings and ignore the rest
     shared_str_dict = __group_by_and_count_data__(data)
@@ -150,8 +154,8 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
             if i>10: break
 
     # open temporary files to write data on the fly (do NOT manipulate large strings in memory, this is super slow!)
-    shared_str_file = open(os.path.join(base_path, f".{target_name}_shared_str.tmp"), "w")
-    rows_file = open(os.path.join(base_path, f".{target_name}_rows.tmp"), "w")
+    shared_str_file = open(os.path.join(base_path, f".{target_file_name}_shared_str.tmp"), "w")
+    rows_file = open(os.path.join(base_path, f".{target_file_name}_rows.tmp"), "w")
 
     # add index that will be necessary when writing worksheet data
     # start preparing sharedStrings file, begin with repeated items
@@ -199,18 +203,33 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
     rows_file.close()
 
     # rewrite sheet1.xml file using temporary file already prepared
-    __write_sheet1_file__(base_path, target_name)
+    __write_sheet1_file__(base_path, target_file_name)
     # rewrite sharedStrings.xml file temporary file already prepared
-    __write_shared_strings_file__(base_path, target_name, total_cnt, str_index_counter)
+    __write_shared_strings_file__(base_path, target_file_name, total_cnt, str_index_counter)
 
     # ... and zip the whole directory as Excel file
-    shutil.make_archive(os.path.join(base_path, target_name+".xlsx"), 'zip', os.path.join(base_path, target_name))
-    shutil.move(os.path.join(base_path, target_name+".xlsx.zip"), os.path.join(base_path, target_name+".xlsx"))
+    shutil.make_archive(os.path.join(base_path, target_file_name+".xlsx"), 'zip', os.path.join(base_path, target_file_name))
+    shutil.move(os.path.join(base_path, target_file_name+".xlsx.zip"), os.path.join(base_path, target_file_name+".xlsx"))
     # cleanup
-    os.remove(os.path.join(base_path, f".{target_name}_rows.tmp"))
-    os.remove(os.path.join(base_path, f".{target_name}_shared_str.tmp"))
+    os.remove(os.path.join(base_path, f".{target_file_name}_rows.tmp"))
+    os.remove(os.path.join(base_path, f".{target_file_name}_shared_str.tmp"))
     if not debug:
-        shutil.rmtree(os.path.join(base_path, target_name), ignore_errors=True)
+        shutil.rmtree(os.path.join(base_path, target_file_name), ignore_errors=True)
+
+
+def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
+    # remove redundant file extension
+    if target_file_name.endswith(".xlsx"): target_file_name = target_file_name[:-3]
+
+    params = DEFAULT_PARAMS.copy()
+    if custom_params is not None:
+        params.update(custom_params)
+
+    if len(data) <= params["row_limit"]:
+        __do_write_raw_data(base_path, target_file_name, data, debug, custom_params)
+    else:
+        pass
+        #TODO
 
 
 def write_dummy(base_path: str, target_name: str) -> None:
