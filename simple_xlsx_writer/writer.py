@@ -135,11 +135,11 @@ def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: i
     __save_template__(os.path.join(base_path, target_name, 'xl', "sharedStrings.xml"), shared_strings_xml)
 
 
-def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False) -> None:
+def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
     # remove redundant file extension
     target_name = target_file_name if not target_file_name.endswith(".xlsx") else target_file_name[:-3]
 
-    prepare_blank_xlsx(base_path, target_name)
+    prepare_blank_xlsx(base_path, target_name, custom_params)
 
     # assuming that most of the strings is actually unique, let's find all repeated strings and ignore the rest
     shared_str_dict = __group_by_and_count_data__(data)
@@ -215,4 +215,4 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
 
 def write_dummy(base_path: str, target_name: str) -> None:
     data = [["A", "B", "C"], ["TEST", 1.23, "2024-10-01 12:34:56"], ["TEST", 200, "2024-10-01 12:34:56"]]
-    write_raw_data(base_path, target_name, data)
+    write_raw_data(base_path, target_name, data, custom_params = {"sheet_name": "dummy"})
