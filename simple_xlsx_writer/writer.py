@@ -10,6 +10,23 @@ def __save_template__(path: str, template: str) -> None:
     with open(path, "w", encoding="utf-8") as f:
         f.write(template)
 
+def parse_str_value(v: str):
+    try:
+        v_decoded = int(v)
+    except:
+        try:
+            v_decoded = float(v)
+        except:
+            v_decoded = escape_invalid_chars(v)
+    return v_decoded
+
+
+def escape_invalid_chars(s: str) -> str:
+    # all invalid XML characters, after:
+    # https://stackoverflow.com/questions/1546717/escaping-strings-for-use-in-xml
+    return (s.replace("<","&#60;").replace(">","&#62;").replace('"',"&#34;")
+            .replace("'","&#39;").replace("&","&#38;"))
+
 DEFAULT_PARAMS = {
     "sheet_name": "data",
     "python_date_format": "%Y-%m-%d",
@@ -18,7 +35,8 @@ DEFAULT_PARAMS = {
     "python_datetime_remove_zeros_pattern": " 00:00:00",
     "headers": True,
     "row_limit": 1048576-1, # 2^20-1, reserve 1 row for header
-    "row_limit_exceed_strategy": "truncate" # truncate / files / sheets
+    "row_limit_exceed_strategy": "truncate", # truncate / files / sheets
+    "debug_info_every_rows": 10000
 }
 
 __CONTENT_TYPES_XML__ = \
@@ -145,6 +163,10 @@ def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: i
 def __do_write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
     prepare_blank_xlsx(base_path, target_file_name, custom_params)
 
+    params = DEFAULT_PARAMS.copy()
+    if custom_params is not None:
+        params.update(custom_params)
+
     # assuming that most of the strings is actually unique, let's find all repeated strings and ignore the rest
     shared_str_dict = __group_by_and_count_data__(data)
     shared_str_dict_sorted = __get_repeated_by_count__(shared_str_dict)
@@ -171,8 +193,9 @@ def __do_write_raw_data(base_path: str, target_file_name: str, data: [], debug: 
     total_cnt = 0 # this is required for sharedStrings (total number of string occurrences)
     row_cnt = 0
     str_index_counter = len(shared_dict_repetitions_indexed) # this is required for sharedStrings (unique string references)
+    debug_info_every_rows = params["debug_info_every_rows"]
     for row in data:
-        if row_cnt % 10000 == 0 and debug:
+        if row_cnt % debug_info_every_rows == 0 and debug:
             print(f"{row_cnt} / {total_cnt} / {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         row_txt_one = "<row>"

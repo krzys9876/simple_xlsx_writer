@@ -48,8 +48,10 @@ def get_data_from_query(query: str, user: str, password: str, dsn: str, custom_p
             for r in result:
                 row=[]
                 for cell in r:
-                    if type(cell)==int or type(cell)==float or type(cell)==str:
+                    if type(cell)==int or type(cell)==float:
                         row.append(cell)
+                    elif type(cell)==str:
+                        row.append(writer.escape_invalid_chars(cell))
                     elif type(cell)==datetime.datetime:
                         txt = cell.strftime(datetime_format)
                         if datetime_remove_zeros:
