@@ -22,7 +22,7 @@ def get_sysdate(user: str, password: str, dsn: str) -> datetime.datetime:
             return res[0]
 
 
-def get_data_from_query(query: str, user: str, password: str, dsn: str, headers: bool = True, custom_params = None) -> []:
+def get_data_from_query(query: str, user: str, password: str, dsn: str, custom_params = None) -> []:
     __init_oracle_version__()
 
     params = writer.DEFAULT_PARAMS.copy()
@@ -34,6 +34,7 @@ def get_data_from_query(query: str, user: str, password: str, dsn: str, headers:
     datetime_format = params["python_datetime_format"]
     datetime_remove_zeros = params["python_datetime_remove_zeros"]
     datetime_remove_zeros_pattern = params["python_datetime_remove_zeros_pattern"]
+    headers = params["headers"]
     with oracledb.connect(user=user, password=password, dsn=dsn) as connection:
         with connection.cursor() as cursor:
             result = cursor.execute(query)
@@ -65,10 +66,10 @@ def get_data_from_query(query: str, user: str, password: str, dsn: str, headers:
 
 
 def write_oracle_query(query: str, base_path: str, target_file_name: str, user: str, password: str, dsn: str,
-                       header: bool = True, debug: bool = False, custom_params = None) -> None:
+                       debug: bool = False, custom_params = None) -> None:
     if debug:
         print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ": executing query")
-    data = get_data_from_query(query,user,password,dsn,header)
+    data = get_data_from_query(query,user,password,dsn, custom_params)
     if debug:
         print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ": writing file")
     writer.write_raw_data(base_path, target_file_name, data, debug, custom_params)
