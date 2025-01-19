@@ -17,8 +17,8 @@ DEFAULT_PARAMS = {
     "python_datetime_remove_zeros": True,
     "python_datetime_remove_zeros_pattern": " 00:00:00",
     "headers": True,
-    "row_limit": 1048576, # 2^20
-    "row_limit_exceed_strategy": "files" # files / sheets
+    "row_limit": 1048576-1, # 2^20-1, reserve 1 row for header
+    "row_limit_exceed_strategy": "truncate" # truncate / files / sheets
 }
 
 __CONTENT_TYPES_XML__ = \
@@ -225,23 +225,29 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
     if custom_params is not None:
         params.update(custom_params)
 
-    if len(data) <= params["row_limit"]:
+    limit = params["row_limit"]
+    assert limit>0, "parameter row_limit must be greater than 0"
+    write_headers = params["headers"]
+    if len(data) <= limit:
         __do_write_raw_data(base_path, target_file_name, data, debug, custom_params)
     else:
         if params["row_limit_exceed_strategy"].casefold() == "files".casefold():
             file_num = 1
             rows_processed = 0
-            row_limit = params["row_limit"]
+            row_limit = limit
             all_rows = len(data)
-            header_row = data[0] if params["headers"] else None
-            data_to_process = data[1:] if params["headers"] else data
+            header_row = data[0] if write_headers else None
+            data_to_process = data[1:] if write_headers else data
             while rows_processed < all_rows:
                 data_slice = data_to_process[rows_processed:
                                              rows_processed+row_limit if rows_processed+row_limit<all_rows else all_rows]
-                if params["headers"]: data_slice.insert(0, header_row)
+                if write_headers: data_slice.insert(0, header_row)
                 __do_write_raw_data(base_path, target_file_name+str(file_num), data_slice, debug, custom_params)
                 file_num += 1
                 rows_processed += row_limit
+        else:
+            data_to_process = data[:limit + 1 if write_headers else 0]
+            __do_write_raw_data(base_path, target_file_name, data_to_process, debug, custom_params)
 
 
 def write_dummy(base_path: str, target_name: str) -> None:
