@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "simple-xlsx-writer"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
 ]
 requires-python = ">=3.11"
@@ -17,7 +17,7 @@ maintainers = [
 description = "Save large amounts of data to small xlsx files"
 readme = "README.md"
 license = {file = "LICENSE"}
-keywords = ["pyspark", "spark", "explorer", "data"]
+keywords = ["python", "xlsx", "Excel", "export", "database"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
