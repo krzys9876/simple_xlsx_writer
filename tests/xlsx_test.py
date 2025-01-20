@@ -159,3 +159,49 @@ class TestXlsxWriter:
             <si><t>C3</t></si>"""))
         assert shared_strings_txt == expected_ss
 
+
+    def test_generated_xlsx_multiple_sheets(self):
+        # NOTE: we cannot simply test if the resulting file is a valid xlsx file so instead we test internal file contents
+        # given
+        base_path = "simple_xlsx_writer_test_files04"
+        self.init_path(base_path)
+        data = [['A', 'B'],[1.1, 'TEST1'],[1.2, 'TEST2'],[1.3, 'TEST1'],[1.4, 'TEST1'],[1.5, 'TEST1']]
+        # when
+        writer.write_raw_data(base_path, 'test_multi', data, debug=True,
+                              custom_params={"row_limit": 2, "row_limit_exceed_strategy": "sheets"})
+        # then file resulting exists as well as internal files (when debug=True files are not deleted)
+        assert os.path.isfile(os.path.join(base_path, 'test_multi.xlsx'))
+        assert os.path.isfile(os.path.join(base_path, 'test_multi', 'xl', 'worksheets', 'sheet1.xml'))
+        assert os.path.isfile(os.path.join(base_path, 'test_multi', 'xl', 'worksheets', 'sheet2.xml'))
+        assert os.path.isfile(os.path.join(base_path, 'test_multi', 'xl', 'worksheets', 'sheet3.xml'))
+
+        # and sheet1/2/3.xml files have expected contents
+        # NOTE: shared strings contain different data (differently ordered) than files generated for "files" strategy
+        sheet1_txt = self.read_contents(os.path.join(base_path, 'test_multi', 'xl', 'worksheets', 'sheet1.xml'))
+        expected_sh1 = self.reduce_text(writer.__prepare_sheet_xml__("""
+            <row><c t="s"><v>1</v></c><c t="s"><v>2</v></c></row>
+            <row><c t="n"><v>1.1</v></c><c t="s"><v>0</v></c></row>
+            <row><c t="n"><v>1.2</v></c><c t="s"><v>3</v></c></row>"""))
+        assert sheet1_txt == expected_sh1
+
+        sheet2_txt = self.read_contents(os.path.join(base_path, 'test_multi', 'xl', 'worksheets', 'sheet2.xml'))
+        expected_sh2 = self.reduce_text(writer.__prepare_sheet_xml__("""
+            <row><c t="s"><v>1</v></c><c t="s"><v>2</v></c></row>
+            <row><c t="n"><v>1.3</v></c><c t="s"><v>0</v></c></row>
+            <row><c t="n"><v>1.4</v></c><c t="s"><v>0</v></c></row>"""))
+        assert sheet2_txt == expected_sh2
+
+        sheet3_txt = self.read_contents(os.path.join(base_path, 'test_multi', 'xl', 'worksheets', 'sheet3.xml'))
+        expected_sh3 = self.reduce_text(writer.__prepare_sheet_xml__("""
+            <row><c t="s"><v>1</v></c><c t="s"><v>2</v></c></row>
+            <row><c t="n"><v>1.5</v></c><c t="s"><v>0</v></c></row>"""))
+        assert sheet3_txt == expected_sh3
+
+        # and sharedStrings.xml file has expected contents
+        shared_strings_txt = self.read_contents(os.path.join(base_path, 'test_multi', 'xl', 'sharedStrings.xml'))
+        expected_ss = self.reduce_text(writer.__prepare_shared_strings__(11,4,"""
+            <si><t>TEST1</t></si>
+            <si><t>A</t></si>
+            <si><t>B</t></si>
+            <si><t>TEST2</t></si>"""))
+        assert shared_strings_txt == expected_ss

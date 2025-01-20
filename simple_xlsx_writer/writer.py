@@ -287,9 +287,11 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
     limit = params["row_limit"]
     assert limit>0, "parameter row_limit must be greater than 0"
     write_headers = params["headers"]
+    # generate single file with single sheet that contains all source data
     if len(data) <= (limit + 1 if write_headers else 0):
         __do_write_raw_data__(base_path, target_file_name, [data], debug, custom_params)
     else:
+        # generate multiple files when row limit is exceeded
         if params["row_limit_exceed_strategy"].casefold() == "files".casefold():
             file_num = 1
             rows_processed = 0
@@ -304,6 +306,22 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
                 __do_write_raw_data__(base_path, target_file_name + str(file_num), [data_slice], debug, custom_params)
                 file_num += 1
                 rows_processed += row_limit
+        # generate multiple sheets in a single file when row limit is exceeded
+        elif params["row_limit_exceed_strategy"].casefold() == "sheets".casefold():
+            rows_processed = 0
+            row_limit = limit
+            all_rows = len(data)
+            header_row = data[0] if write_headers else None
+            data_to_process = data[1:] if write_headers else data
+            data = []
+            while rows_processed < all_rows:
+                data_slice = data_to_process[rows_processed:
+                                             rows_processed+row_limit if rows_processed+row_limit<all_rows else all_rows]
+                if write_headers: data_slice.insert(0, header_row)
+                data.append(data_slice)
+                rows_processed += row_limit
+            __do_write_raw_data__(base_path, target_file_name, data, debug, custom_params)
+        # generate single file with single sheet that contains all source data up to the row limit
         else:
             data_truncated = data[:limit + 1 if write_headers else 0]
             __do_write_raw_data__(base_path, target_file_name, [data_truncated], debug, custom_params)
