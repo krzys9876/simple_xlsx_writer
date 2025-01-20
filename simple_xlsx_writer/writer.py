@@ -58,13 +58,23 @@ __CONTENT_TYPES_XML__ = \
 <Default ContentType="application/xml" Extension="xml"/>
 <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml" PartName="/xl/sharedStrings.xml"/>
 <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml" PartName="/xl/workbook.xml"/>
-<Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" PartName="/xl/worksheets/sheet1.xml"/>
+{{ SHEET_FILES }}
 </Types>"""
+
+def __prepare_content_types_xml__(sheet_names: [str]) -> str:
+    sheet_line_template = \
+        '<Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" PartName="/xl/worksheets/{{ SHEET_FILE }}.xml"/>'
+    sheet_lines = ""
+    for i, name in enumerate(sheet_names):
+        sheet_file = f"sheet{i+1}"
+        sheet_lines += sheet_line_template.replace("{{ SHEET_FILE }}", sheet_file)+"\n"
+    return __CONTENT_TYPES_XML__.replace("{{ SHEET_FILES }}", sheet_lines)
+
 
 __RELS__ = \
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Target="xl/workbook.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"/>
+<Relationship Id="rId1" Target="xl/workbook.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"/>
 </Relationships>"""
 
 __XL_WORKBOOK_XML__ = \
@@ -106,9 +116,7 @@ def __prepare_shared_strings__(count: int, unique: int, strings: str) -> str:
             .replace("{{ UNIQUE_COUNT }}", str(unique))
             .replace("{{ STRINGS }}", str(strings)))
 
-def prepare_blank_xlsx(base_path: str, target_name: str, custom_params = None) -> None:
-    params = update_params(custom_params)
-
+def prepare_blank_xlsx(base_path: str, target_name: str, sheet_names: [str]) -> None:
     __ensure_path__(base_path)
     target_path = os.path.join(base_path, target_name)
     __ensure_path__(target_path)
@@ -121,10 +129,10 @@ def prepare_blank_xlsx(base_path: str, target_name: str, custom_params = None) -
     wks_path = os.path.join(xl_path, "worksheets")
     __ensure_path__(wks_path)
 
-    __save_template__(os.path.join(target_path, "[Content_Types].xml"), __CONTENT_TYPES_XML__)
+    __save_template__(os.path.join(target_path, "[Content_Types].xml"), __prepare_content_types_xml__(sheet_names))
     __save_template__(os.path.join(rels_path, ".rels"), __RELS__)
     __save_template__(os.path.join(xl_path, "workbook.xml"),
-                      __XL_WORKBOOK_XML__.replace("{{ SHEET_NAME }}", params["sheet_name"]))
+                      __XL_WORKBOOK_XML__.replace("{{ SHEET_NAME }}", sheet_names[0]))
     __save_template__(os.path.join(xl_rels_path, "workbook.xml.rels"), __XL_RELS_WORKBOOK_XML__)
 
 
@@ -171,9 +179,10 @@ def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: i
 
 
 def __do_write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
-    prepare_blank_xlsx(base_path, target_file_name, custom_params)
-
     params = update_params(custom_params)
+
+    sheet_names = [params["sheet_name"]]
+    prepare_blank_xlsx(base_path, target_file_name, sheet_names)
 
     # assuming that most of the strings is actually unique, let's find all repeated strings and ignore the rest
     shared_str_dict = __group_by_and_count_data__(data)
