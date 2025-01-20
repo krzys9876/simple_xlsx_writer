@@ -58,17 +58,16 @@ __CONTENT_TYPES_XML__ = \
 <Default ContentType="application/xml" Extension="xml"/>
 <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml" PartName="/xl/sharedStrings.xml"/>
 <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml" PartName="/xl/workbook.xml"/>
-{{ SHEET_FILES }}
+{{ SHEETS }}
 </Types>"""
 
 def __prepare_content_types_xml__(sheet_names: [str]) -> str:
     sheet_line_template = \
-        '<Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" PartName="/xl/worksheets/{{ SHEET_FILE }}.xml"/>'
+        '<Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" PartName="/xl/worksheets/sheet{{ SHEET_ID }}.xml"/>'
     sheet_lines = ""
-    for i, name in enumerate(sheet_names):
-        sheet_file = f"sheet{i+1}"
-        sheet_lines += sheet_line_template.replace("{{ SHEET_FILE }}", sheet_file)+"\n"
-    return __CONTENT_TYPES_XML__.replace("{{ SHEET_FILES }}", sheet_lines)
+    for i in range(len(sheet_names)):
+        sheet_lines += sheet_line_template.replace("{{ SHEET_ID }}", str(i+1))+"\n"
+    return __CONTENT_TYPES_XML__.replace("{{ SHEETS }}", sheet_lines)
 
 
 __RELS__ = \
@@ -82,16 +81,39 @@ __XL_WORKBOOK_XML__ = \
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
 <workbookPr date1904="false"/><bookViews><workbookView activeTab="0"/></bookViews>
 <sheets>
-<sheet name="{{ SHEET_NAME }}" r:id="rId2" sheetId="1"/>
+{{ SHEETS }}
 </sheets>
 </workbook>"""
+
+def __prepare_xl_workbook_xml__(sheet_names: [str]) -> str:
+    sheet_line_template = \
+        '<sheet name="{{ SHEET_NAME }}" r:id="rId{{ R_ID }}" sheetId="{{ SHEET_ID }}"/>'
+    sheet_lines = ""
+    for i, name in enumerate(sheet_names):
+        sheet_lines += (sheet_line_template
+                        .replace("{{ SHEET_NAME }}", name)
+                        .replace("{{ R_ID }}", str(i+2))
+                        .replace("{{ SHEET_ID }}", str(i+1)))+"\n"
+    return __XL_WORKBOOK_XML__.replace("{{ SHEETS }}", sheet_lines)
+
 
 __XL_RELS_WORKBOOK_XML__ = \
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"/>
-<Relationship Id="rId2" Target="worksheets/sheet1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/>
+{{ SHEETS }}
 </Relationships>"""
+
+def __prepare_xl_rels_workbook_xml__(sheet_names: [str]) -> str:
+    sheet_line_template = \
+        '<Relationship Id="rId{{ R_ID }}" Target="worksheets/sheet{{ SHEET_ID }}.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/>'
+    sheet_lines = ""
+    for i in range(len(sheet_names)):
+        sheet_lines += (sheet_line_template
+                        .replace("{{ R_ID }}", str(i+2))
+                        .replace("{{ SHEET_ID }}", str(i+1)))+"\n"
+    return __XL_RELS_WORKBOOK_XML__ .replace("{{ SHEETS }}", sheet_lines)
+
 
 __SHEET1_XML__ = \
 """<?xml version="1.0" encoding="UTF-8"?>
@@ -131,9 +153,8 @@ def prepare_blank_xlsx(base_path: str, target_name: str, sheet_names: [str]) -> 
 
     __save_template__(os.path.join(target_path, "[Content_Types].xml"), __prepare_content_types_xml__(sheet_names))
     __save_template__(os.path.join(rels_path, ".rels"), __RELS__)
-    __save_template__(os.path.join(xl_path, "workbook.xml"),
-                      __XL_WORKBOOK_XML__.replace("{{ SHEET_NAME }}", sheet_names[0]))
-    __save_template__(os.path.join(xl_rels_path, "workbook.xml.rels"), __XL_RELS_WORKBOOK_XML__)
+    __save_template__(os.path.join(xl_path, "workbook.xml"),__prepare_xl_workbook_xml__(sheet_names))
+    __save_template__(os.path.join(xl_rels_path, "workbook.xml.rels"), __prepare_xl_rels_workbook_xml__(sheet_names))
 
 
 def __group_by_and_count_data__(data: []) -> {}:
