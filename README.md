@@ -5,7 +5,7 @@
 So I decided to write my own *xlsx* export for two reasons:
 
 First and foremost, the two existing engines I use (*openpyxl*, *xlsxwriter*) available in *pandas* do not store large files efficiently.
-The problem is when I must load large number of records, up to Excel limit (2^20 = 1048576) and then send it over email 
+The problem is when I must load large number of records, sometimes beyond Excel limit (2^20 = 1048576) and then send it over email 
 (this is quite often the easies way to share data...). The files get way big.
 
 Secondly, I just want to understand *xlsx* internals and use the simples possible code to handle files. 
@@ -72,6 +72,69 @@ See: *main.py*
     oracle_handler.write_oracle_query(query,base_path, "all_tables",username,password,dh_url)
 
     ...
+
+### CSV conversion
+
+From time to time I come across large CSV files. When you want to load it to Excel using Power Query it generally works fine,
+but what if you have to load it over the slow network. The solution is to load all files to relativelly small *xlsx* file.
+
+#### Example
+
+    ...
+
+    custom_params = {
+        "debug_info_every_rows": 100000,
+        "row_limit": 1000000,
+        "row_limit_exceed_strategy": "sheets" # truncate / files / sheets
+    }
+    base_path = os.path.dirname(__file__)
+    writer.convert_csv("c:\\some_path\\A_VERY_LARGE_CSV.csv", base_path,
+                       "converted_from_csv.xlsx", debug=True, custom_params=custom_params)
+    
+    ...
+
+The *debug* option is particularly useful when you want to ensure that data load progresses.
+
+
+### Exceeding Excel row limit
+
+If your input data exceeds Excel row limit or you just want to divide it into smaller chunks, 
+you may use two strategies (see: *configuration*):
+    
+- use files - save each chunk into a separate *xlsx* file
+- use sheets - save each chunk into a separate worksheet within a single *xlsx* file
+
+# Configuration
+
+You may customize operations using *custom_params* parameter. The available options are:
+
+|Parameter| Default value                               | Description                                                           |
+|-|---------------------------------------------|-----------------------------------------------------------------------|
+|sheet_name| data                                        | sheet name or sheet name prefix for multiple sheets (numbered from 1) |
+|python_date_format| %Y-%m-%d                                    | date format when converting data loaded from database                 | 
+|python_datetime_format| %Y-%m-%d %H:%M:%S                           | as above but for datatime format                                      |
+|python_datetime_remove_zeros| True                                        | should empty time be removed (to save space and improve readability)  |
+|python_datetime_remove_zeros_pattern| " 00:00:00"                                 | the pattern of empty time to be removed                               |
+|headers| True                                        | does input data contain header row                                    |
+|row_limit| 1048576-1 (2^20-1)                          | row limit (unchecked!)                                                |
+|row_limit_exceed_strategy| truncate                                    | what to do when dealing with data exceeding row limit                 |
+||| - truncate - truncate data beyond row limit|
+||| - files - generate multiple files (numbered from 1)|
+||| - sheets - generate multiple sheets (numbered from 1)|
+|debug_info_every_rows|10000|print debug info every X rows, applies only when debug=True|
+|csv_delimiter|, (comma)|CSV file delimiter|
+|csv_quote|\" (double quote)|CSV quote character|
+|csv_encoding|utf-8|CSV file encoding|
+
+You provide custom options as Python *dict*:
+
+    custom_params = {
+        "sheet_name": "events_",
+        "debug_info_every_rows": 100000,
+        "row_limit": 1000000,
+        "row_limit_exceed_strategy": "sheets"
+    }
+
 
 ## Installation
 
