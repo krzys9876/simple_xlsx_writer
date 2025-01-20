@@ -76,7 +76,7 @@ See: *main.py*
 ### CSV conversion
 
 From time to time I come across large CSV files. When you want to load it to Excel using Power Query it generally works fine,
-but what if you have to load it over the slow network. The solution is to load all files to relativelly small *xlsx* file.
+but what if you have to load it over the slow network. The solution is to load all files to relatively small *xlsx* file.
 
 #### Example
 
@@ -98,7 +98,7 @@ The *debug* option is particularly useful when you want to ensure that data load
 
 ### Exceeding Excel row limit
 
-If your input data exceeds Excel row limit or you just want to divide it into smaller chunks, 
+If your input data exceeds Excel row limit, or you just want to divide it into smaller chunks, 
 you may use two strategies (see: *configuration*):
     
 - use files - save each chunk into a separate *xlsx* file
@@ -154,7 +154,7 @@ To verify installation run:
     base_path = os.path.dirname(__file__) # or provide explicit path in interactive mode
     writer.write_dummy(base_path, "dummy01")
 
-You should find *dummy01.xlsx* file in a given containig:
+You should find *dummy01.xlsx* file in a given containing:
 
 | A    | B    | C                   |
 |------|------|---------------------|
@@ -166,7 +166,7 @@ You should find *dummy01.xlsx* file in a given containig:
 Keep in mind that the module is performance and size optimized, NOT memory optimized.
 The complete dataset (either from database of CSV file) is loaded to memory in order to calculate shared strings. 
 
-For extremely large files (as for Excel terms, not extermely in general) the memory requirements are substantial.
+For extremely large files (as for Excel terms, not extremely in general) the memory requirements are substantial.
 
 One real-life example is conversion of 1GB CSV file (2.5M rows and 60 columns with lots of text repetitions, Windows 11). 
 
