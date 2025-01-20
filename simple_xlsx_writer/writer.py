@@ -278,6 +278,24 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[
         shutil.rmtree(os.path.join(base_path, target_file_name), ignore_errors=True)
 
 
+def __slice_input__(input_data: [], custom_params: dict = None) -> [[]]:
+    params = update_params(custom_params)
+    rows_processed = 0
+    row_limit = params["row_limit"]
+    write_headers = params["headers"]
+    all_rows = len(input_data)
+    header_row = input_data[0] if write_headers else None
+    data_to_process = input_data[1:] if write_headers else input_data
+    slices = []
+    while rows_processed < all_rows:
+        data_slice = data_to_process[rows_processed:
+                                     rows_processed + row_limit if rows_processed + row_limit < all_rows else all_rows]
+        if write_headers: data_slice.insert(0, header_row)
+        slices.append(data_slice)
+        rows_processed += row_limit
+    return slices
+
+
 def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
     # remove redundant file extension
     if target_file_name.endswith(".xlsx"): target_file_name = target_file_name[:-5]
@@ -293,34 +311,13 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
     else:
         # generate multiple files when row limit is exceeded
         if params["row_limit_exceed_strategy"].casefold() == "files".casefold():
-            file_num = 1
-            rows_processed = 0
-            row_limit = limit
-            all_rows = len(data)
-            header_row = data[0] if write_headers else None
-            data_to_process = data[1:] if write_headers else data
-            while rows_processed < all_rows:
-                data_slice = data_to_process[rows_processed:
-                                             rows_processed+row_limit if rows_processed+row_limit<all_rows else all_rows]
-                if write_headers: data_slice.insert(0, header_row)
-                __do_write_raw_data__(base_path, target_file_name + str(file_num), [data_slice], debug, custom_params)
-                file_num += 1
-                rows_processed += row_limit
+            sliced_data = __slice_input__(data, custom_params)
+            for i, data_slice in enumerate(sliced_data):
+                __do_write_raw_data__(base_path, target_file_name + str(i+1), [data_slice], debug, custom_params)
         # generate multiple sheets in a single file when row limit is exceeded
         elif params["row_limit_exceed_strategy"].casefold() == "sheets".casefold():
-            rows_processed = 0
-            row_limit = limit
-            all_rows = len(data)
-            header_row = data[0] if write_headers else None
-            data_to_process = data[1:] if write_headers else data
-            data = []
-            while rows_processed < all_rows:
-                data_slice = data_to_process[rows_processed:
-                                             rows_processed+row_limit if rows_processed+row_limit<all_rows else all_rows]
-                if write_headers: data_slice.insert(0, header_row)
-                data.append(data_slice)
-                rows_processed += row_limit
-            __do_write_raw_data__(base_path, target_file_name, data, debug, custom_params)
+            sliced_data = __slice_input__(data, custom_params)
+            __do_write_raw_data__(base_path, target_file_name, sliced_data, debug, custom_params)
         # generate single file with single sheet that contains all source data up to the row limit
         else:
             data_truncated = data[:limit + 1 if write_headers else 0]
