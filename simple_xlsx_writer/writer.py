@@ -176,7 +176,7 @@ def __get_repeated_by_count__(str_dict: {}) -> {}:
 
 
 def __write_sheet_file__(base_path: str, target_name: str, file_id: int) -> None:
-    with open(os.path.join(base_path, f".{target_name}_rows.tmp"), "r") as f:
+    with open(os.path.join(base_path, f".{target_name}_rows{file_id}.tmp"), "r") as f:
         rows_txt=f.read()
 
     # now read contents of temporary files and save it to templates
@@ -197,7 +197,8 @@ def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: i
 def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[]], debug: bool = False, custom_params = None) -> None:
     params = update_params(custom_params)
 
-    sheet_names = [params["sheet_name"]]
+    sheet_names = [params["sheet_name"]] if len(sheets_data) == 1 \
+        else [params["sheet_name"]+str(i+1) for i in range(len(sheets_data))]
     prepare_blank_xlsx(base_path, target_file_name, sheet_names)
 
     # assuming that most of the strings is actually unique, let's find all repeated strings and ignore the rest
@@ -208,9 +209,8 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[
             print(f"{i}: {item[0]} {item[1]}")
             if i>10: break
 
-    # open temporary files to write data on the fly (do NOT manipulate large strings in memory, this is super slow!)
+    # open temporary file to write data on the fly (do NOT manipulate large strings in memory, this is super slow!)
     shared_str_file = open(os.path.join(base_path, f".{target_file_name}_shared_str.tmp"), "w")
-    rows_file = open(os.path.join(base_path, f".{target_file_name}_rows.tmp"), "w")
 
     # add index that will be necessary when writing worksheet data
     # start preparing sharedStrings file, begin with repeated items
@@ -227,40 +227,42 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[
     row_cnt = 0
     str_index_counter = len(shared_dict_repetitions_indexed) # this is required for sharedStrings (unique string references)
     debug_info_every_rows = params["debug_info_every_rows"]
-    data = sheets_data[0]
-    for row in data:
-        if row_cnt % debug_info_every_rows == 0 and debug:
-            print(f"{row_cnt} / {total_cnt} / {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    for i, data in enumerate(sheets_data):
+        file_index = i+1
+        with open(os.path.join(base_path, f".{target_file_name}_rows{file_index}.tmp"), "w") as rows_file:
+            for row in data:
+                if row_cnt % debug_info_every_rows == 0 and debug:
+                    print(f"{row_cnt} / {total_cnt} / {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-        row_txt_one = "<row>"
-        for cell in row:
-            if type(cell) is int or type(cell) is float or (type(cell) is str and cell==""):
-                # write numeric or empty cell
-                row_txt_one += '<c t="n"><v>' + str(cell) + '</v></c>'
-            elif type(cell) is str:
-                total_cnt += 1
-                try: # repeated string, already stored in sharedStrings
-                    str_index = shared_dict_repetitions_indexed[cell][1]
-                except KeyError: # one-off string, append it to sharedStrings and increment counter (item index)
-                    shared_str_file.write("<si><t>" + cell + "</t></si>\n")
-                    str_index = str_index_counter
-                    str_index_counter += 1
+                row_txt_one = "<row>"
+                for cell in row:
+                    if type(cell) is int or type(cell) is float or (type(cell) is str and cell==""):
+                        # write numeric or empty cell
+                        row_txt_one += '<c t="n"><v>' + str(cell) + '</v></c>'
+                    elif type(cell) is str:
+                        total_cnt += 1
+                        try: # repeated string, already stored in sharedStrings
+                            str_index = shared_dict_repetitions_indexed[cell][1]
+                        except KeyError: # one-off string, append it to sharedStrings and increment counter (item index)
+                            shared_str_file.write("<si><t>" + cell + "</t></si>\n")
+                            str_index = str_index_counter
+                            str_index_counter += 1
 
-                # write textual cell data with reference to shared string
-                # leave it to Excel to figure out format (e.g. date)
-                row_txt_one += '<c t="s"><v>' + str(str_index) + '</v></c>'
-            else:
-                raise TypeError("Unsupported type, ensure that input data is: int, float or str")
+                        # write textual cell data with reference to shared string
+                        # leave it to Excel to figure out format (e.g. date)
+                        row_txt_one += '<c t="s"><v>' + str(str_index) + '</v></c>'
+                    else:
+                        raise TypeError("Unsupported type, ensure that input data is: int, float or str")
 
-        row_txt_one += "</row>\n"
-        rows_file.write(row_txt_one)
-        row_cnt += 1
+                row_txt_one += "</row>\n"
+                rows_file.write(row_txt_one)
+                row_cnt += 1
+
+        # rewrite sheetX.xml file using temporary file already prepared
+        __write_sheet_file__(base_path, target_file_name,file_index)
 
     shared_str_file.close()
-    rows_file.close()
 
-    # rewrite sheet1.xml file using temporary file already prepared
-    __write_sheet_file__(base_path, target_file_name,1)
     # rewrite sharedStrings.xml file temporary file already prepared
     __write_shared_strings_file__(base_path, target_file_name, total_cnt, str_index_counter)
 
@@ -268,8 +270,10 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[
     shutil.make_archive(os.path.join(base_path, target_file_name+".xlsx"), 'zip', os.path.join(base_path, target_file_name))
     shutil.move(os.path.join(base_path, target_file_name+".xlsx.zip"), os.path.join(base_path, target_file_name+".xlsx"))
     # cleanup
-    os.remove(os.path.join(base_path, f".{target_file_name}_rows.tmp"))
     os.remove(os.path.join(base_path, f".{target_file_name}_shared_str.tmp"))
+    # cleanup
+    for i in range(len(sheets_data)):
+        os.remove(os.path.join(base_path, f".{target_file_name}_rows{i+1}.tmp"))
     if not debug:
         shutil.rmtree(os.path.join(base_path, target_file_name), ignore_errors=True)
 
