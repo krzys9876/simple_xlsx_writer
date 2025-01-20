@@ -193,7 +193,7 @@ def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: i
     __save_template__(os.path.join(base_path, target_name, 'xl', "sharedStrings.xml"), shared_strings_xml)
 
 
-def __do_write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
+def __do_write_raw_data__(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
     params = update_params(custom_params)
 
     sheet_names = [params["sheet_name"]]
@@ -281,8 +281,8 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
     limit = params["row_limit"]
     assert limit>0, "parameter row_limit must be greater than 0"
     write_headers = params["headers"]
-    if len(data) <= limit:
-        __do_write_raw_data(base_path, target_file_name, data, debug, custom_params)
+    if len(data) <= (limit + 1 if write_headers else 0):
+        __do_write_raw_data__(base_path, target_file_name, data, debug, custom_params)
     else:
         if params["row_limit_exceed_strategy"].casefold() == "files".casefold():
             file_num = 1
@@ -295,12 +295,12 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
                 data_slice = data_to_process[rows_processed:
                                              rows_processed+row_limit if rows_processed+row_limit<all_rows else all_rows]
                 if write_headers: data_slice.insert(0, header_row)
-                __do_write_raw_data(base_path, target_file_name+str(file_num), data_slice, debug, custom_params)
+                __do_write_raw_data__(base_path, target_file_name + str(file_num), data_slice, debug, custom_params)
                 file_num += 1
                 rows_processed += row_limit
         else:
             data_to_process = data[:limit + 1 if write_headers else 0]
-            __do_write_raw_data(base_path, target_file_name, data_to_process, debug, custom_params)
+            __do_write_raw_data__(base_path, target_file_name, data_to_process, debug, custom_params)
 
 
 def write_dummy(base_path: str, target_file_name: str) -> None:
