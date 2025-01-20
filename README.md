@@ -6,7 +6,7 @@ So I decided to write my own *xlsx* export for two reasons:
 
 First and foremost, the two existing engines I use (*openpyxl*, *xlsxwriter*) available in *pandas* do not store large files efficiently.
 The problem is when I must load large number of records, sometimes beyond Excel limit (2^20 = 1048576) and then send it over email 
-(this is quite often the easies way to share data...). The files get way big.
+(this is quite often the easies way to share data...). The files get way too big.
 
 Secondly, I just want to understand *xlsx* internals and use the simples possible code to handle files. 
 As a side effect, it is simpler and faster than using some other libraries.
@@ -170,5 +170,5 @@ For extremely large files (as for Excel terms, not extermely in general) the mem
 
 One real-life example is conversion of 1GB CSV file (2.5M rows and 60 columns with lots of text repetitions, Windows 11). 
 
-It required loading the file to memory takes **~6GB**, slicing it to separate sheets bumps memory for a brief moment up to even **10GB**.
+Loading the file to memory takes **~6GB**, slicing it to separate sheets bumps memory for a brief moment up to even **10GB**.
 The resulting single xlsx file is about **60MB** (6% of original). The process takes about **8 minutes** (i5 13gen).
