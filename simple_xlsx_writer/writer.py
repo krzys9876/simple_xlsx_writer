@@ -274,6 +274,8 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
             __do_write_raw_data(base_path, target_file_name, data_to_process, debug, custom_params)
 
 
-def write_dummy(base_path: str, target_name: str) -> None:
+def write_dummy(base_path: str, target_file_name: str) -> None:
     data = [["A", "B", "C"], ["TEST", 1.23, "2024-10-01 12:34:56"], ["TEST", 200, "2024-10-01 12:34:56"]]
-    write_raw_data(base_path, target_name, data, custom_params = {"sheet_name": "dummy"})
+    write_raw_data(base_path, target_file_name, data, custom_params = {"sheet_name": "dummy"})
+
+
