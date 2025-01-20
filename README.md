@@ -108,23 +108,23 @@ you may use two strategies (see: *configuration*):
 
 You may customize operations using *custom_params* parameter. The available options are:
 
-|Parameter| Default value                               | Description                                                           |
-|-|---------------------------------------------|-----------------------------------------------------------------------|
-|sheet_name| data                                        | sheet name or sheet name prefix for multiple sheets (numbered from 1) |
-|python_date_format| %Y-%m-%d                                    | date format when converting data loaded from database                 | 
-|python_datetime_format| %Y-%m-%d %H:%M:%S                           | as above but for datatime format                                      |
-|python_datetime_remove_zeros| True                                        | should empty time be removed (to save space and improve readability)  |
-|python_datetime_remove_zeros_pattern| " 00:00:00"                                 | the pattern of empty time to be removed                               |
-|headers| True                                        | does input data contain header row                                    |
-|row_limit| 1048576-1 (2^20-1)                          | row limit (unchecked!)                                                |
-|row_limit_exceed_strategy| truncate                                    | what to do when dealing with data exceeding row limit                 |
-||| - truncate - truncate data beyond row limit|
-||| - files - generate multiple files (numbered from 1)|
-||| - sheets - generate multiple sheets (numbered from 1)|
-|debug_info_every_rows|10000|print debug info every X rows, applies only when debug=True|
-|csv_delimiter|, (comma)|CSV file delimiter|
-|csv_quote|\" (double quote)|CSV quote character|
-|csv_encoding|utf-8|CSV file encoding|
+| **Parameter**                        | **Default value**  | **Description**                                                       |
+|--------------------------------------|--------------------|-----------------------------------------------------------------------|
+| sheet_name                           | data               | sheet name or sheet name prefix for multiple sheets (numbered from 1) |
+| python_date_format                   | %Y-%m-%d           | date format when converting data loaded from database                 | 
+| python_datetime_format               | %Y-%m-%d %H:%M:%S  | as above but for datatime format                                      |
+| python_datetime_remove_zeros         | True               | should empty time be removed (to save space and improve readability)  |
+| python_datetime_remove_zeros_pattern | " 00:00:00"        | the pattern of empty time to be removed                               |
+| headers                              | True               | does input data contain header row                                    |
+| row_limit                            | 1048576-1 (2^20-1) | row limit (unchecked!)                                                |
+| row_limit_exceed_strategy            | truncate           | what to do when dealing with data exceeding row limit                 |
+|                                      |                    | - truncate - truncate data beyond row limit                           |
+|                                      |                    | - files - generate multiple files (numbered from 1)                   |
+|                                      |                    | - sheets - generate multiple sheets (numbered from 1)                 |
+| debug_info_every_rows                | 10000              | print debug info every X rows, applies only when debug=True           |
+| csv_delimiter                        | , (comma)          | CSV file delimiter                                                    |
+| csv_quote                            | \" (double quote)  | CSV quote character                                                   |
+| csv_encoding                         | utf-8              | CSV file encoding                                                     |
 
 You provide custom options as Python *dict*:
 
