@@ -245,7 +245,7 @@ def __do_write_raw_data(base_path: str, target_file_name: str, data: [], debug: 
 
 def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
     # remove redundant file extension
-    if target_file_name.endswith(".xlsx"): target_file_name = target_file_name[:-3]
+    if target_file_name.endswith(".xlsx"): target_file_name = target_file_name[:-5]
 
     params = update_params(custom_params)
 
