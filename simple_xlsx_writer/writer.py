@@ -39,6 +39,13 @@ DEFAULT_PARAMS = {
     "debug_info_every_rows": 10000
 }
 
+def update_params(custom_params: {}) -> {}:
+    params = DEFAULT_PARAMS.copy()
+    if custom_params is not None:
+        params.update(custom_params)
+    return params
+
+
 __CONTENT_TYPES_XML__ = \
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -95,9 +102,7 @@ def __prepare_shared_strings__(count: int, unique: int, strings: str) -> str:
             .replace("{{ STRINGS }}", str(strings)))
 
 def prepare_blank_xlsx(base_path: str, target_name: str, custom_params = None) -> None:
-    params = DEFAULT_PARAMS.copy()
-    if custom_params is not None:
-        params.update(custom_params)
+    params = update_params(custom_params)
 
     __ensure_path__(base_path)
     target_path = os.path.join(base_path, target_name)
@@ -163,9 +168,7 @@ def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: i
 def __do_write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
     prepare_blank_xlsx(base_path, target_file_name, custom_params)
 
-    params = DEFAULT_PARAMS.copy()
-    if custom_params is not None:
-        params.update(custom_params)
+    params = update_params(custom_params)
 
     # assuming that most of the strings is actually unique, let's find all repeated strings and ignore the rest
     shared_str_dict = __group_by_and_count_data__(data)
@@ -244,9 +247,7 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
     # remove redundant file extension
     if target_file_name.endswith(".xlsx"): target_file_name = target_file_name[:-3]
 
-    params = DEFAULT_PARAMS.copy()
-    if custom_params is not None:
-        params.update(custom_params)
+    params = update_params(custom_params)
 
     limit = params["row_limit"]
     assert limit>0, "parameter row_limit must be greater than 0"

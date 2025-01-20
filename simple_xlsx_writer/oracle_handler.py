@@ -25,9 +25,7 @@ def get_sysdate(user: str, password: str, dsn: str) -> datetime.datetime:
 def get_data_from_query(query: str, user: str, password: str, dsn: str, custom_params = None) -> []:
     __init_oracle_version__()
 
-    params = writer.DEFAULT_PARAMS.copy()
-    if custom_params is not None:
-        params.update(custom_params)
+    params = writer.update_params(custom_params)
 
     data = []
     date_format = params["python_date_format"]
