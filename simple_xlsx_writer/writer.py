@@ -51,6 +51,17 @@ def update_params(custom_params: {}) -> {}:
     return params
 
 
+# fill template of XML lines defining worksheets
+def __prepare_sheets_template__(template: str, sheet_line_template: str, sheet_names: [str]) -> str:
+    sheet_lines = ""
+    for i, name in enumerate(sheet_names):
+        sheet_lines += (sheet_line_template
+                        .replace("{{ SHEET_NAME }}", name)
+                        .replace("{{ R_ID }}", str(i+2))
+                        .replace("{{ SHEET_ID }}", str(i+1)))+"\n"
+    return template.replace("{{ SHEETS }}", sheet_lines)
+
+
 __CONTENT_TYPES_XML__ = \
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -58,16 +69,13 @@ __CONTENT_TYPES_XML__ = \
 <Default ContentType="application/xml" Extension="xml"/>
 <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml" PartName="/xl/sharedStrings.xml"/>
 <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml" PartName="/xl/workbook.xml"/>
-{{ SHEETS }}
-</Types>"""
+{{ SHEETS }}</Types>"""
+
+__CONTENT_TYPES_XML_SHEETS__ = \
+    '<Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" PartName="/xl/worksheets/sheet{{ SHEET_ID }}.xml"/>'
 
 def __prepare_content_types_xml__(sheet_names: [str]) -> str:
-    sheet_line_template = \
-        '<Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" PartName="/xl/worksheets/sheet{{ SHEET_ID }}.xml"/>'
-    sheet_lines = ""
-    for i in range(len(sheet_names)):
-        sheet_lines += sheet_line_template.replace("{{ SHEET_ID }}", str(i+1))+"\n"
-    return __CONTENT_TYPES_XML__.replace("{{ SHEETS }}", sheet_lines)
+    return __prepare_sheets_template__(__CONTENT_TYPES_XML__, __CONTENT_TYPES_XML_SHEETS__, sheet_names)
 
 
 __RELS__ = \
@@ -81,46 +89,33 @@ __XL_WORKBOOK_XML__ = \
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
 <workbookPr date1904="false"/><bookViews><workbookView activeTab="0"/></bookViews>
 <sheets>
-{{ SHEETS }}
-</sheets>
+{{ SHEETS }}</sheets>
 </workbook>"""
 
+__XL_WORKBOOK_XML_SHEETS__ = '<sheet name="{{ SHEET_NAME }}" r:id="rId{{ R_ID }}" sheetId="{{ SHEET_ID }}"/>'
+
 def __prepare_xl_workbook_xml__(sheet_names: [str]) -> str:
-    sheet_line_template = \
-        '<sheet name="{{ SHEET_NAME }}" r:id="rId{{ R_ID }}" sheetId="{{ SHEET_ID }}"/>'
-    sheet_lines = ""
-    for i, name in enumerate(sheet_names):
-        sheet_lines += (sheet_line_template
-                        .replace("{{ SHEET_NAME }}", name)
-                        .replace("{{ R_ID }}", str(i+2))
-                        .replace("{{ SHEET_ID }}", str(i+1)))+"\n"
-    return __XL_WORKBOOK_XML__.replace("{{ SHEETS }}", sheet_lines)
+    return __prepare_sheets_template__(__XL_WORKBOOK_XML__, __XL_WORKBOOK_XML_SHEETS__, sheet_names)
 
 
 __XL_RELS_WORKBOOK_XML__ = \
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"/>
-{{ SHEETS }}
-</Relationships>"""
+{{ SHEETS }}</Relationships>"""
+
+__XL_RELS_WORKBOOK_XML_SHEETS__ = \
+    '<Relationship Id="rId{{ R_ID }}" Target="worksheets/sheet{{ SHEET_ID }}.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/>'
 
 def __prepare_xl_rels_workbook_xml__(sheet_names: [str]) -> str:
-    sheet_line_template = \
-        '<Relationship Id="rId{{ R_ID }}" Target="worksheets/sheet{{ SHEET_ID }}.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/>'
-    sheet_lines = ""
-    for i in range(len(sheet_names)):
-        sheet_lines += (sheet_line_template
-                        .replace("{{ R_ID }}", str(i+2))
-                        .replace("{{ SHEET_ID }}", str(i+1)))+"\n"
-    return __XL_RELS_WORKBOOK_XML__ .replace("{{ SHEETS }}", sheet_lines)
+    return __prepare_sheets_template__(__XL_RELS_WORKBOOK_XML__, __XL_RELS_WORKBOOK_XML_SHEETS__, sheet_names)
 
 
 __SHEET1_XML__ = \
 """<?xml version="1.0" encoding="UTF-8"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 <sheetData>
-{{ ROWS }}
-</sheetData>
+{{ ROWS }}</sheetData>
 </worksheet>"""
 
 def __prepare_sheet1_xml__(rows: str) -> str:
@@ -129,8 +124,7 @@ def __prepare_sheet1_xml__(rows: str) -> str:
 __SHARED_STRINGS_XML__ = \
 """<?xml version="1.0" encoding="UTF-8"?>
 <sst count="{{ TOTAL_COUNT }}" uniqueCount="{{ UNIQUE_COUNT }}" xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-{{ STRINGS }}
-</sst>"""
+{{ STRINGS }}</sst>"""
 
 def __prepare_shared_strings__(count: int, unique: int, strings: str) -> str:
     return (__SHARED_STRINGS_XML__
