@@ -151,17 +151,18 @@ def prepare_blank_xlsx(base_path: str, target_name: str, sheet_names: [str]) -> 
     __save_template__(os.path.join(xl_rels_path, "workbook.xml.rels"), __prepare_xl_rels_workbook_xml__(sheet_names))
 
 
-def __group_by_and_count_data__(data: []) -> {}:
+def __group_by_and_count_data__(sheets_data: [[]]) -> {}:
     shared_str_dict = {}
-    for row in data:
-        for cell in row:
-            if type(cell) is str and cell != "":
-                try:
-                    existing_cnt = shared_str_dict[cell]
-                except KeyError:
-                    existing_cnt = 0
+    for data in sheets_data:
+        for row in data:
+            for cell in row:
+                if type(cell) is str and cell != "":
+                    try:
+                        existing_cnt = shared_str_dict[cell]
+                    except KeyError:
+                        existing_cnt = 0
 
-                shared_str_dict[cell] = existing_cnt+1
+                    shared_str_dict[cell] = existing_cnt+1
 
     return shared_str_dict
 
@@ -193,14 +194,14 @@ def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: i
     __save_template__(os.path.join(base_path, target_name, 'xl', "sharedStrings.xml"), shared_strings_xml)
 
 
-def __do_write_raw_data__(base_path: str, target_file_name: str, data: [], debug: bool = False, custom_params = None) -> None:
+def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[]], debug: bool = False, custom_params = None) -> None:
     params = update_params(custom_params)
 
     sheet_names = [params["sheet_name"]]
     prepare_blank_xlsx(base_path, target_file_name, sheet_names)
 
     # assuming that most of the strings is actually unique, let's find all repeated strings and ignore the rest
-    shared_str_dict = __group_by_and_count_data__(data)
+    shared_str_dict = __group_by_and_count_data__(sheets_data)
     shared_str_dict_sorted = __get_repeated_by_count__(shared_str_dict)
     if debug:
         for i, item in enumerate(shared_str_dict_sorted.items()):
@@ -226,6 +227,7 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, data: [], debug
     row_cnt = 0
     str_index_counter = len(shared_dict_repetitions_indexed) # this is required for sharedStrings (unique string references)
     debug_info_every_rows = params["debug_info_every_rows"]
+    data = sheets_data[0]
     for row in data:
         if row_cnt % debug_info_every_rows == 0 and debug:
             print(f"{row_cnt} / {total_cnt} / {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -282,7 +284,7 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
     assert limit>0, "parameter row_limit must be greater than 0"
     write_headers = params["headers"]
     if len(data) <= (limit + 1 if write_headers else 0):
-        __do_write_raw_data__(base_path, target_file_name, data, debug, custom_params)
+        __do_write_raw_data__(base_path, target_file_name, [data], debug, custom_params)
     else:
         if params["row_limit_exceed_strategy"].casefold() == "files".casefold():
             file_num = 1
@@ -295,12 +297,12 @@ def write_raw_data(base_path: str, target_file_name: str, data: [], debug: bool 
                 data_slice = data_to_process[rows_processed:
                                              rows_processed+row_limit if rows_processed+row_limit<all_rows else all_rows]
                 if write_headers: data_slice.insert(0, header_row)
-                __do_write_raw_data__(base_path, target_file_name + str(file_num), data_slice, debug, custom_params)
+                __do_write_raw_data__(base_path, target_file_name + str(file_num), [data_slice], debug, custom_params)
                 file_num += 1
                 rows_processed += row_limit
         else:
-            data_to_process = data[:limit + 1 if write_headers else 0]
-            __do_write_raw_data__(base_path, target_file_name, data_to_process, debug, custom_params)
+            data_truncated = data[:limit + 1 if write_headers else 0]
+            __do_write_raw_data__(base_path, target_file_name, [data_truncated], debug, custom_params)
 
 
 def write_dummy(base_path: str, target_file_name: str) -> None:
