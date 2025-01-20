@@ -15,7 +15,7 @@ As a simple benchmark consider a sample file of 700+k records and 18 columns.
 Standard *pandas* creates files of about **40**MB. The simple_xls_writer's file is as small as **8**MB which makes it more *email friendly*. 
 
 
-(Of course when saving modified file it gets much bigger but this not the point). 
+(Of course when saving modified file it gets much bigger but that's not the point). 
 
 ## Usage
 
