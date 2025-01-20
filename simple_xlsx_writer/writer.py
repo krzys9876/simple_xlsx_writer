@@ -111,15 +111,15 @@ def __prepare_xl_rels_workbook_xml__(sheet_names: [str]) -> str:
     return __prepare_sheets_template__(__XL_RELS_WORKBOOK_XML__, __XL_RELS_WORKBOOK_XML_SHEETS__, sheet_names)
 
 
-__SHEET1_XML__ = \
+__SHEET_XML__ = \
 """<?xml version="1.0" encoding="UTF-8"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 <sheetData>
 {{ ROWS }}</sheetData>
 </worksheet>"""
 
-def __prepare_sheet1_xml__(rows: str) -> str:
-    return __SHEET1_XML__.replace("{{ ROWS }}", rows)
+def __prepare_sheet_xml__(rows: str) -> str:
+    return __SHEET_XML__.replace("{{ ROWS }}", rows)
 
 __SHARED_STRINGS_XML__ = \
 """<?xml version="1.0" encoding="UTF-8"?>
@@ -174,13 +174,13 @@ def __get_repeated_by_count__(str_dict: {}) -> {}:
     return shared_str_dict_sorted
 
 
-def __write_sheet1_file__(base_path: str, target_name: str) -> None:
+def __write_sheet_file__(base_path: str, target_name: str, file_id: int) -> None:
     with open(os.path.join(base_path, f".{target_name}_rows.tmp"), "r") as f:
         rows_txt=f.read()
 
     # now read contents of temporary files and save it to templates
-    sheet1_xml = __prepare_sheet1_xml__(rows_txt)
-    __save_template__(os.path.join(base_path, target_name, 'xl', 'worksheets', "sheet1.xml"), sheet1_xml)
+    sheet_xml = __prepare_sheet_xml__(rows_txt)
+    __save_template__(os.path.join(base_path, target_name, 'xl', 'worksheets', f"sheet{file_id}.xml"), sheet_xml)
 
 
 def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: int, unique_cnt: int) -> None:
@@ -258,7 +258,7 @@ def __do_write_raw_data(base_path: str, target_file_name: str, data: [], debug: 
     rows_file.close()
 
     # rewrite sheet1.xml file using temporary file already prepared
-    __write_sheet1_file__(base_path, target_file_name)
+    __write_sheet_file__(base_path, target_file_name,1)
     # rewrite sharedStrings.xml file temporary file already prepared
     __write_shared_strings_file__(base_path, target_file_name, total_cnt, str_index_counter)
 

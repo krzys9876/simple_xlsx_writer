@@ -50,7 +50,7 @@ class TestXlsxWriter:
 
         # and sheet1.xml has expected contents
         sheet1_txt = self.read_contents(os.path.join(base_path, 'test01', 'xl', 'worksheets', 'sheet1.xml'))
-        expected_sh1 = self.reduce_text(writer.__prepare_sheet1_xml__("""
+        expected_sh1 = self.reduce_text(writer.__prepare_sheet_xml__("""
             <row><c t="s"><v>1</v></c><c t="s"><v>2</v></c></row>
             <row><c t="n"><v>1.1</v></c><c t="s"><v>0</v></c></row>
             <row><c t="n"><v>1.2</v></c><c t="s"><v>3</v></c></row>
@@ -86,21 +86,21 @@ class TestXlsxWriter:
 
         # and sheet1.xml files have expected contents
         sheet1_txt = self.read_contents(os.path.join(base_path, 'test_multi1', 'xl', 'worksheets', 'sheet1.xml'))
-        expected_sh1 = self.reduce_text(writer.__prepare_sheet1_xml__("""
+        expected_sh1 = self.reduce_text(writer.__prepare_sheet_xml__("""
             <row><c t="s"><v>0</v></c><c t="s"><v>1</v></c></row>
             <row><c t="n"><v>1.1</v></c><c t="s"><v>2</v></c></row>
             <row><c t="n"><v>1.2</v></c><c t="s"><v>3</v></c></row>"""))
         assert sheet1_txt == expected_sh1
 
         sheet2_txt = self.read_contents(os.path.join(base_path, 'test_multi2', 'xl', 'worksheets', 'sheet1.xml'))
-        expected_sh2 = self.reduce_text(writer.__prepare_sheet1_xml__("""
+        expected_sh2 = self.reduce_text(writer.__prepare_sheet_xml__("""
             <row><c t="s"><v>1</v></c><c t="s"><v>2</v></c></row>
             <row><c t="n"><v>1.3</v></c><c t="s"><v>0</v></c></row>
             <row><c t="n"><v>1.4</v></c><c t="s"><v>0</v></c></row>"""))
         assert sheet2_txt == expected_sh2
 
         sheet3_txt = self.read_contents(os.path.join(base_path, 'test_multi3', 'xl', 'worksheets', 'sheet1.xml'))
-        expected_sh3 = self.reduce_text(writer.__prepare_sheet1_xml__("""
+        expected_sh3 = self.reduce_text(writer.__prepare_sheet_xml__("""
             <row><c t="s"><v>0</v></c><c t="s"><v>1</v></c></row>
             <row><c t="n"><v>1.5</v></c><c t="s"><v>2</v></c></row>"""))
         assert sheet3_txt == expected_sh3
@@ -144,7 +144,7 @@ class TestXlsxWriter:
         assert os.path.isfile(os.path.join(base_path, 'test_multi_tab.xlsx'))
         # and sheet1.xml has expected contents
         sheet1_txt = self.read_contents(os.path.join(base_path, 'test_multi_tab', 'xl', 'worksheets', 'sheet1.xml'))
-        expected_sh1 = self.reduce_text(writer.__prepare_sheet1_xml__("""
+        expected_sh1 = self.reduce_text(writer.__prepare_sheet_xml__("""
             <row><c t="s"><v>1</v></c><c t="s"><v>2</v></c><c t="s"><v>3</v></c></row>
             <row><c t="s"><v>0</v></c><c t="n"><v>0.01</v></c><c t="n"><v>0.02</v></c></row>
             <row><c t="s"><v>0</v></c><c t="n"><v>0.03</v></c><c t="n"><v>0.04</v></c></row>"""))
