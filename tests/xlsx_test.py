@@ -26,13 +26,16 @@ class TestXlsxWriter:
             sheet1_raw_data = f.readlines()
             return TestXlsxWriter.reduce_text_list(sheet1_raw_data)
 
+    @staticmethod
+    def init_path(base_path: str) -> None:
+        shutil.rmtree(base_path, ignore_errors=True)
+        os.mkdir(base_path)
 
     def test_generated_xlsx_file(self):
         # NOTE: we cannot simply test if the resulting file is a valid xlsx file so instead we test internal file contents
         # given
         base_path = "simple_xlsx_writer_test_files01"
-        shutil.rmtree(base_path, ignore_errors=True)
-        os.mkdir(base_path)
+        self.init_path(base_path)
         data = [['A', 'B'],[1.1, 'TEST1'],[1.2, 'TEST2'],[1.3, 'TEST1']]
         # when
         writer.write_raw_data(base_path, 'test01', data, debug=True)
@@ -68,8 +71,7 @@ class TestXlsxWriter:
         # NOTE: we cannot simply test if the resulting file is a valid xlsx file so instead we test internal file contents
         # given
         base_path = "simple_xlsx_writer_test_files02"
-        shutil.rmtree(base_path, ignore_errors=True)
-        os.mkdir(base_path)
+        self.init_path(base_path)
         data = [['A', 'B'],[1.1, 'TEST1'],[1.2, 'TEST2'],[1.3, 'TEST1'],[1.4, 'TEST1'],[1.5, 'TEST1']]
         # when
         writer.write_raw_data(base_path, 'test_multi', data, debug=True,
