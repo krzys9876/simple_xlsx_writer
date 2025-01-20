@@ -127,3 +127,35 @@ class TestXlsxWriter:
             <si><t>B</t></si>
             <si><t>TEST1</t></si>"""))
         assert shared_strings3_txt == expected3_ss
+
+
+    def test_conversion_from_csv(self):
+        csv_content = ['"C1","C2","C3"','"v1",0.01,0.02','"v1",0.03,0.04']
+        # given
+        base_path = "simple_xlsx_writer_test_files03"
+        self.init_path(base_path)
+        csv_path = os.path.join(base_path, "test_multi_tab.csv")
+        with open(csv_path, 'w') as f:
+            f.write("\n".join(csv_content))
+        assert os.path.isfile(csv_path)
+        # when
+        writer.convert_csv(str(csv_path), base_path, "test_multi_tab", debug=True)
+        # then xlsx file exists
+        assert os.path.isfile(os.path.join(base_path, 'test_multi_tab.xlsx'))
+        # and sheet1.xml has expected contents
+        sheet1_txt = self.read_contents(os.path.join(base_path, 'test_multi_tab', 'xl', 'worksheets', 'sheet1.xml'))
+        expected_sh1 = self.reduce_text(writer.__prepare_sheet1_xml__("""
+            <row><c t="s"><v>1</v></c><c t="s"><v>2</v></c><c t="s"><v>3</v></c></row>
+            <row><c t="s"><v>0</v></c><c t="n"><v>0.01</v></c><c t="n"><v>0.02</v></c></row>
+            <row><c t="s"><v>0</v></c><c t="n"><v>0.03</v></c><c t="n"><v>0.04</v></c></row>"""))
+        assert sheet1_txt == expected_sh1
+        # and sharedStrings.xml has expected contents
+        shared_strings_txt = self.read_contents(os.path.join(base_path, 'test_multi_tab', 'xl', 'sharedStrings.xml'))
+        # NOTE: TEST1 is repeated twice so it appears at the top of the list
+        expected_ss = self.reduce_text(writer.__prepare_shared_strings__(5,4,"""
+            <si><t>v1</t></si>
+            <si><t>C1</t></si>
+            <si><t>C2</t></si>
+            <si><t>C3</t></si>"""))
+        assert shared_strings_txt == expected_ss
+

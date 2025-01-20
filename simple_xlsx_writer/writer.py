@@ -1,6 +1,8 @@
 import os
 import datetime
 import shutil
+import csv
+
 
 def __ensure_path__(path: str) -> None:
     if not os.path.exists(path):
@@ -36,7 +38,10 @@ DEFAULT_PARAMS = {
     "headers": True,
     "row_limit": 1048576-1, # 2^20-1, reserve 1 row for header
     "row_limit_exceed_strategy": "truncate", # truncate / files / sheets
-    "debug_info_every_rows": 10000
+    "debug_info_every_rows": 10000,
+    "csv_delimiter": ",",
+    "csv_quote": '"',
+    "csv_encoding": "utf-8"
 }
 
 def update_params(custom_params: {}) -> {}:
@@ -278,4 +283,19 @@ def write_dummy(base_path: str, target_file_name: str) -> None:
     data = [["A", "B", "C"], ["TEST", 1.23, "2024-10-01 12:34:56"], ["TEST", 200, "2024-10-01 12:34:56"]]
     write_raw_data(base_path, target_file_name, data, custom_params = {"sheet_name": "dummy"})
 
+
+def convert_csv(csv_path: str, base_path: str, target_file_name: str, debug: bool = False, custom_params = None) -> None:
+    params = update_params(custom_params)
+    data = []
+    with (open(csv_path, "r", encoding=params["csv_encoding"]) as f):
+        csv_content = csv.reader(f, delimiter=params["csv_delimiter"], quotechar=params["csv_quote"])
+        counter = 0
+        debug_info_every_rows = params["debug_info_every_rows"]
+        for l in csv_content:
+            row = [parse_str_value(c) for c in l]
+            data.append(row)
+            counter += 1
+            if counter % debug_info_every_rows == 0 and debug: print(f"loaded {counter} rows")
+
+    write_raw_data(base_path, target_file_name, data, debug=debug, custom_params=custom_params)
 
