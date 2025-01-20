@@ -160,3 +160,15 @@ You should find *dummy01.xlsx* file in a given containig:
 |------|------|---------------------|
 | TEST | 1,23 | 2024-10-01 12:34:56 |
 | TEST | 200  | 2024-10-01 12:34:56 |
+
+## Memory considerations
+
+Keep in mind that the module is performance and size optimized, NOT memory optimized.
+The complete dataset (either from database of CSV file) is loaded to memory in order to calculate shared strings. 
+
+For extremely large files (as for Excel terms, not extermely in general) the memory requirements are substantial.
+
+One real-life example is conversion of 1GB CSV file (2.5M rows and 60 columns with lots of text repetitions, Windows 11). 
+
+It required loading the file to memory takes **~6GB**, slicing it to separate sheets bumps memory for a brief moment up to even **10GB**.
+The resulting single xlsx file is about **60MB** (6% of original). The process takes about **8 minutes** (i5 13gen).
