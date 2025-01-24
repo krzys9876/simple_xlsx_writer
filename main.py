@@ -16,7 +16,7 @@ def main():
     writer.write_dummy(base_path, "dummy01")
 
     query = "select * from all_tables"
-    oracle_handler.write_oracle_query(query,base_path, "all_tables",username,password,dh_url)
+    oracle_handler.write_query(query, base_path, "all_tables", username, password, dh_url)
 
 
 if __name__ == '__main__':

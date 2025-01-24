@@ -65,8 +65,8 @@ def get_data_from_query(query: str, user: str, password: str, dsn: str, custom_p
     return data
 
 
-def write_oracle_query(query: str, base_path: str, target_file_name: str, user: str, password: str, dsn: str,
-                       debug: bool = False, custom_params = None) -> None:
+def write_query(query: str, base_path: str, target_file_name: str, user: str, password: str, dsn: str,
+                debug: bool = False, custom_params = None) -> None:
     if debug:
         print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ": executing query")
     data = get_data_from_query(query,user,password,dsn, custom_params)
