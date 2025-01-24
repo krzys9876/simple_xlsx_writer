@@ -22,7 +22,8 @@ Standard *pandas* creates files of about **40**MB. The simple_xls_writer's file 
 The project consists of submodules: 
 
 - *writer*
-- *oracle_handler*. 
+- *postgresql_handler*
+- *oracle_handler*
 
 ### writer
 
@@ -41,21 +42,54 @@ So you may have to prepare the input array yourself or use other submodules (see
 
 There's a helper function *write_dummy* that saves predefined tiny file under given name.
 
-### oracle_handler 
+### postgresql_handler 
 
-If you use Oracle database you can use helper method that reads query result into required structure.
+If you use PostgreSQL database you can use helper method that reads query result into required structure.
 
 First of all you may wish to verify connection. I prefer to do it this way:
 
-    print("db time: "+oracle_handler.get_sysdate(username,password,dh_url).strftime("%Y-%m-%d %H:%M:%S"))
+    print("db time: "+postgresql_handler.get_sysdate(username,password,host,port,dbname).strftime("%Y-%m-%d %H:%M:%S"))
 
-To save query results simply run:
+To save query results run:
+
+    postgresql_handler.write_query(query, base_path, "all_tables_pg", username, password, host, port, dbname)
+
+### oracle_handler 
+
+If you use Oracle database the usage is very similar to PostgreSQL, except for naming and parameter list.
+
+You may verify connection using :
+
+    print("db time: "+oracle_handler.get_sysdate(username,password,dsn).strftime("%Y-%m-%d %H:%M:%S"))
+
+To save query results run:
 
     oracle_handler.write_oracle_query(query,base_path, "all_tables",username,password,dh_url)
 
+
 #### Example
 
-See: *main.py*
+See: *main_pg.py*
+
+    ...
+
+    username = input("username: ")
+    password = getpass.getpass()
+    host = input("host: ")
+    port = int(input("port: "))
+    dbname = input("database name: ")
+
+    # verify connection
+    print("db time: "+postgresql_handler.get_sysdate(username,password,host,port,dbname).strftime("%Y-%m-%d %H:%M:%S"))
+
+    # fetch all tables' metadata
+    query = "select * from information_schema.tables"
+    base_path = os.path.dirname(__file__)
+    postgresql_handler.write_query(query, base_path, "all_tables_pg", username, password, host, port, dbname)
+
+    ...
+
+See: *main_ora.py*
 
     ...    
 
@@ -142,9 +176,12 @@ Install package using pip:
 
     pip install simple-xlsx-writer
 
-If you wish to use *Oracle* connectivity, add option:
+If you wish to use *Oracle* and/or *PostgrweSQL* connectivity, add option(s):
 
+    pip install simple-xlsx-writer[postgresql]
     pip install simple-xlsx-writer[oracle]
+
+These add required dependencies: *psycopg* and *oracledb* respectively. You can always install them yourself. 
 
 To verify installation run:
 
