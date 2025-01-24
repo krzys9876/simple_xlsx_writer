@@ -64,7 +64,7 @@ You may verify connection using :
 
 To save query results run:
 
-    oracle_handler.write_oracle_query(query,base_path, "all_tables",username,password,dh_url)
+    oracle_handler.write_query(query,base_path, "all_tables",username,password,dh_url)
 
 
 #### Example
@@ -95,15 +95,15 @@ See: *main_ora.py*
 
     username = input("username: ")
     password = getpass.getpass()
-    dh_url = input("DSN: ")
+    dsn = input("DSN: ")
     
     # verify connection
-    print("db time: "+oracle_handler.get_sysdate(username,password,dh_url).strftime("%Y-%m-%d %H:%M:%S"))
+    print("db time: "+oracle_handler.get_sysdate(username,password,dsn).strftime("%Y-%m-%d %H:%M:%S"))
 
     # fetch all tables' metadata
     query = "select * from all_tables"
     base_path = os.path.dirname(__file__)
-    oracle_handler.write_oracle_query(query,base_path, "all_tables",username,password,dh_url)
+    oracle_handler.write_query(query,base_path, "all_tables",username,password,dsn)
 
     ...
 
