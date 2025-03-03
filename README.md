@@ -162,6 +162,7 @@ You may customize operations using *custom_params* parameter. The available opti
 | csv_quote                            | \" (double quote)  | CSV quote character                                                   |
 | csv_encoding                         | utf-8              | CSV file encoding                                                     |
 | file_encoding                        | utf-8              | target file encoding, may be useful when using special charasters     | 
+| oracle_client_mode                   | thin               | Oracle client mode, thick may be required in some setups              |
 
 You provide custom options as Python *dict*:
 

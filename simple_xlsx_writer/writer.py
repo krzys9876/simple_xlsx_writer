@@ -17,7 +17,8 @@ DEFAULT_PARAMS = {
     "csv_delimiter": ",",
     "csv_quote": '"',
     "csv_encoding": "utf-8",
-    "file_encoding": "utf-8"
+    "file_encoding": "utf-8",
+    "oracle_client_mode": "thin" # thin or thick
 }
 
 def __encoding__(params: dict) -> str:
