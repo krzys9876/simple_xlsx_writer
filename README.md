@@ -4,15 +4,17 @@
 
 So I decided to write my own *xlsx* export for two reasons:
 
-First and foremost, the two existing engines I use (*openpyxl*, *xlsxwriter*) available in *pandas* do not store large files efficiently.
-The problem is when I must load large number of records, sometimes beyond Excel limit (2^20 = 1048576) and then send it over email 
-(this is quite often the easies way to share data...). The files get way too big.
+First and foremost, the two existing engines I use (*openpyxl*, *xlsxwriter*) available in *pandas* do not store 
+large files efficiently. The problem is when I must load large number of records, sometimes beyond Excel limit 
+(2^20 = 1048576) and then send it over email or Teams (this is quite often the easies way to share data...). 
+The files get way too big.
 
 Secondly, I just want to understand *xlsx* internals and use the simples possible code to handle files. 
 As a side effect, it is simpler and faster than using some other libraries.
 
 As a simple benchmark consider a sample file of 700+k records and 18 columns. 
-Standard *pandas* creates files of about **40**MB. The simple_xls_writer's file is as small as **8**MB which makes it more *email friendly*. 
+Standard *pandas* creates files of about **40**MB. The simple_xls_writer's file is as small as **8**MB 
+which makes it more *email friendly*. 
 
 
 (Of course when saving modified file it gets much bigger but that's not the point). 
@@ -159,6 +161,7 @@ You may customize operations using *custom_params* parameter. The available opti
 | csv_delimiter                        | , (comma)          | CSV file delimiter                                                    |
 | csv_quote                            | \" (double quote)  | CSV quote character                                                   |
 | csv_encoding                         | utf-8              | CSV file encoding                                                     |
+| file_encoding                        | utf-8              | target file encoding, may be useful when using special charasters     | 
 
 You provide custom options as Python *dict*:
 

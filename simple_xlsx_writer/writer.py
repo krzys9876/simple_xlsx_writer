@@ -4,12 +4,38 @@ import shutil
 import csv
 
 
+DEFAULT_PARAMS = {
+    "sheet_name": "data",
+    "python_date_format": "%Y-%m-%d",
+    "python_datetime_format": "%Y-%m-%d %H:%M:%S",
+    "python_datetime_remove_zeros": True,
+    "python_datetime_remove_zeros_pattern": " 00:00:00",
+    "headers": True,
+    "row_limit": 1048576-1, # 2^20-1, reserve 1 row for header
+    "row_limit_exceed_strategy": "truncate", # truncate / files / sheets
+    "debug_info_every_rows": 10000,
+    "csv_delimiter": ",",
+    "csv_quote": '"',
+    "csv_encoding": "utf-8",
+    "file_encoding": "utf-8"
+}
+
+def __encoding__(params: dict) -> str:
+    return params.get("file_encoding", DEFAULT_PARAMS['file_encoding'])
+
+def update_params(custom_params: {}) -> {}:
+    params = DEFAULT_PARAMS.copy()
+    if custom_params is not None:
+        params.update(custom_params)
+    return params
+
+
 def __ensure_path__(path: str) -> None:
     if not os.path.exists(path):
         os.mkdir(path)
 
-def __save_template__(path: str, template: str) -> None:
-    with open(path, "w", encoding="utf-8") as f:
+def __save_template__(path: str, template: str, params: dict) -> None:
+    with open(path, "w", encoding=__encoding__(params)) as f:
         f.write(template)
 
 def parse_str_value(v: str):
@@ -28,27 +54,6 @@ def escape_invalid_chars(s: str) -> str:
     # https://stackoverflow.com/questions/1546717/escaping-strings-for-use-in-xml
     return (s.replace("<","&#60;").replace(">","&#62;").replace('"',"&#34;")
             .replace("'","&#39;").replace("&","&#38;"))
-
-DEFAULT_PARAMS = {
-    "sheet_name": "data",
-    "python_date_format": "%Y-%m-%d",
-    "python_datetime_format": "%Y-%m-%d %H:%M:%S",
-    "python_datetime_remove_zeros": True,
-    "python_datetime_remove_zeros_pattern": " 00:00:00",
-    "headers": True,
-    "row_limit": 1048576-1, # 2^20-1, reserve 1 row for header
-    "row_limit_exceed_strategy": "truncate", # truncate / files / sheets
-    "debug_info_every_rows": 10000,
-    "csv_delimiter": ",",
-    "csv_quote": '"',
-    "csv_encoding": "utf-8"
-}
-
-def update_params(custom_params: {}) -> {}:
-    params = DEFAULT_PARAMS.copy()
-    if custom_params is not None:
-        params.update(custom_params)
-    return params
 
 
 # fill template of XML lines defining worksheets
@@ -132,7 +137,7 @@ def __prepare_shared_strings__(count: int, unique: int, strings: str) -> str:
             .replace("{{ UNIQUE_COUNT }}", str(unique))
             .replace("{{ STRINGS }}", str(strings)))
 
-def prepare_blank_xlsx(base_path: str, target_name: str, sheet_names: [str]) -> None:
+def prepare_blank_xlsx(base_path: str, target_name: str, sheet_names: [str], params: dict = {}) -> None:
     __ensure_path__(base_path)
     target_path = os.path.join(base_path, target_name)
     __ensure_path__(target_path)
@@ -145,10 +150,10 @@ def prepare_blank_xlsx(base_path: str, target_name: str, sheet_names: [str]) -> 
     wks_path = os.path.join(xl_path, "worksheets")
     __ensure_path__(wks_path)
 
-    __save_template__(os.path.join(target_path, "[Content_Types].xml"), __prepare_content_types_xml__(sheet_names))
-    __save_template__(os.path.join(rels_path, ".rels"), __RELS__)
-    __save_template__(os.path.join(xl_path, "workbook.xml"),__prepare_xl_workbook_xml__(sheet_names))
-    __save_template__(os.path.join(xl_rels_path, "workbook.xml.rels"), __prepare_xl_rels_workbook_xml__(sheet_names))
+    __save_template__(os.path.join(target_path, "[Content_Types].xml"), __prepare_content_types_xml__(sheet_names), params)
+    __save_template__(os.path.join(rels_path, ".rels"), __RELS__, params)
+    __save_template__(os.path.join(xl_path, "workbook.xml"),__prepare_xl_workbook_xml__(sheet_names), params)
+    __save_template__(os.path.join(xl_rels_path, "workbook.xml.rels"), __prepare_xl_rels_workbook_xml__(sheet_names), params)
 
 
 def __group_by_and_count_data__(sheets_data: [[]]) -> {}:
@@ -175,23 +180,23 @@ def __get_repeated_by_count__(str_dict: {}) -> {}:
     return shared_str_dict_sorted
 
 
-def __write_sheet_file__(base_path: str, target_name: str, file_id: int) -> None:
-    with open(os.path.join(base_path, f".{target_name}_rows{file_id}.tmp"), "r") as f:
+def __write_sheet_file__(base_path: str, target_name: str, file_id: int, params: dict) -> None:
+    with open(os.path.join(base_path, f".{target_name}_rows{file_id}.tmp"), "r", encoding=__encoding__(params)) as f:
         rows_txt=f.read()
 
     # now read contents of temporary files and save it to templates
     sheet_xml = __prepare_sheet_xml__(rows_txt)
-    __save_template__(os.path.join(base_path, target_name, 'xl', 'worksheets', f"sheet{file_id}.xml"), sheet_xml)
+    __save_template__(os.path.join(base_path, target_name, 'xl', 'worksheets', f"sheet{file_id}.xml"), sheet_xml, params)
 
 
-def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: int, unique_cnt: int) -> None:
-    with open(os.path.join(base_path, f".{target_name}_shared_str.tmp"), "r") as f:
+def __write_shared_strings_file__(base_path: str, target_name: str, total_cnt: int, unique_cnt: int, params: dict) -> None:
+    with open(os.path.join(base_path, f".{target_name}_shared_str.tmp"), "r", encoding=__encoding__(params)) as f:
         shared_str_txt=f.read()
 
     shared_strings_xml = __prepare_shared_strings__(total_cnt, unique_cnt, shared_str_txt)
 
     # finally save files to proper place...
-    __save_template__(os.path.join(base_path, target_name, 'xl', "sharedStrings.xml"), shared_strings_xml)
+    __save_template__(os.path.join(base_path, target_name, 'xl', "sharedStrings.xml"), shared_strings_xml, params)
 
 
 def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[]], debug: bool = False, custom_params = None) -> None:
@@ -199,7 +204,7 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[
 
     sheet_names = [params["sheet_name"]] if len(sheets_data) == 1 \
         else [params["sheet_name"]+str(i+1) for i in range(len(sheets_data))]
-    prepare_blank_xlsx(base_path, target_file_name, sheet_names)
+    prepare_blank_xlsx(base_path, target_file_name, sheet_names, params)
 
     # assuming that most of the strings is actually unique, let's find all repeated strings and ignore the rest
     shared_str_dict = __group_by_and_count_data__(sheets_data)
@@ -210,7 +215,7 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[
             if i>10: break
 
     # open temporary file to write data on the fly (do NOT manipulate large strings in memory, this is super slow!)
-    shared_str_file = open(os.path.join(base_path, f".{target_file_name}_shared_str.tmp"), "w")
+    shared_str_file = open(os.path.join(base_path, f".{target_file_name}_shared_str.tmp"), "w", encoding=__encoding__(params))
 
     # add index that will be necessary when writing worksheet data
     # start preparing sharedStrings file, begin with repeated items
@@ -229,7 +234,7 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[
     debug_info_every_rows = params["debug_info_every_rows"]
     for i, data in enumerate(sheets_data):
         file_index = i+1
-        with open(os.path.join(base_path, f".{target_file_name}_rows{file_index}.tmp"), "w") as rows_file:
+        with open(os.path.join(base_path, f".{target_file_name}_rows{file_index}.tmp"), "w", encoding=__encoding__(params)) as rows_file:
             for row in data:
                 if row_cnt % debug_info_every_rows == 0 and debug:
                     print(f"{row_cnt} / {total_cnt} / {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -259,12 +264,12 @@ def __do_write_raw_data__(base_path: str, target_file_name: str, sheets_data: [[
                 row_cnt += 1
 
         # rewrite sheetX.xml file using temporary file already prepared
-        __write_sheet_file__(base_path, target_file_name,file_index)
+        __write_sheet_file__(base_path, target_file_name, file_index, params)
 
     shared_str_file.close()
 
     # rewrite sharedStrings.xml file temporary file already prepared
-    __write_shared_strings_file__(base_path, target_file_name, total_cnt, str_index_counter)
+    __write_shared_strings_file__(base_path, target_file_name, total_cnt, str_index_counter, params)
 
     # ... and zip the whole directory as Excel file
     shutil.make_archive(os.path.join(base_path, target_file_name+".xlsx"), 'zip', os.path.join(base_path, target_file_name))
